@@ -37,6 +37,19 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 models:
   my_new_project:
+    +persist_docs:
+      relation: true
+      columns: true
     # Applies to all files under models/example/
-    example:
-      +materialized: table
+    stage:
+      +materialized: ephemeral
+
+snapshots:
+  my_new_project:
+    +target_schema: default
+    +strategy: check
+    +check_cols: all
+    +invalidate_hard_deletes: true
+    +persist_docs:
+      relation: true
+      columns: true

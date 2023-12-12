@@ -1,0 +1,16 @@
+version: 2
+
+models:
+    - name: stg_employee
+      columns:
+          - name: employee_id
+            tests:
+                - unique
+                - not_null
+
+    - name: stg_supplier
+      columns:
+          - name: supplier_id
+            tests:
+                - unique
+                - not_null
