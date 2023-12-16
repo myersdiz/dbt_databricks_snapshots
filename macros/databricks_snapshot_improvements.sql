@@ -8,10 +8,6 @@
     {% do return({
             "unique_key": config.get("unique_key"),
             "surrogate_key": surrogate_key,
-            "dbt_updated_at_column": config.get("dbt_updated_at_column", "dbt_updated_at"),
-            "dbt_valid_from_column": config.get("dbt_valid_from_column", "dbt_valid_from"),
-            "dbt_valid_to_column": config.get("dbt_valid_to_column", "dbt_valid_to"),
-            "dbt_scd_id_column": config.get("dbt_scd_id_column", "dbt_scd_id"),
             "dbt_current_flag_column": config.get("dbt_current_flag_column")
         }) %}
 {% endmacro %}
@@ -39,7 +35,7 @@
             *,
             {{ strategy.unique_key }} as dbt_unique_key
         from {{ target_relation }}
-        where {{config.dbt_valid_to_column}} is null
+        where dbt_valid_to is null
 
     ),
 
@@ -48,15 +44,15 @@
         select
             *,
             {{ strategy.unique_key }} as dbt_unique_key,
-            {{ strategy.updated_at }} as {{config.dbt_updated_at_column}},
-            {{ strategy.updated_at }} as {{config.dbt_valid_from_column}},
-            nullif({{ strategy.updated_at }}, {{ strategy.updated_at }}) as {{config.dbt_valid_to_column}},
+            {{ strategy.updated_at }} as dbt_updated_at,
+            {{ strategy.updated_at }} as dbt_valid_from,
+            nullif({{ strategy.updated_at }}, {{ strategy.updated_at }}) as dbt_valid_to,
 
             {% if config.dbt_current_flag_column -%}
                 'Y' as {{config.dbt_current_flag_column}},
             {%- endif %}
 
-            {{ strategy.scd_id }} as {{ config.dbt_scd_id_column }}
+            {{ strategy.scd_id }} as dbt_scd_id
 
         from snapshot_query
 
@@ -67,7 +63,7 @@
         select
             *,
             {{ strategy.unique_key }} as dbt_unique_key,
-            {{ strategy.updated_at }} as {{config.dbt_updated_at_column}}
+            {{ strategy.updated_at }} as dbt_updated_at
         from snapshot_query
     ),
 
@@ -107,14 +103,14 @@
             {% endif %}
 
             source_data.*,
-            snapshotted_data.{{config.dbt_valid_from_column}},
-            source_data.{{config.dbt_updated_at_column}} as {{config.dbt_valid_to_column}},
+            snapshotted_data.dbt_valid_from,
+            source_data.dbt_updated_at as dbt_valid_to,
 
             {% if config.dbt_current_flag_column -%}
                 'N' as {{config.dbt_current_flag_column}},
             {%- endif %}
 
-            snapshotted_data.{{config.dbt_scd_id_column}}
+            snapshotted_data.dbt_scd_id
 
         from updates_source_data as source_data
         inner join snapshotted_data on snapshotted_data.dbt_unique_key = source_data.dbt_unique_key
@@ -138,15 +134,15 @@
 
             source_data.*,
             snapshotted_data.dbt_unique_key,
-            {{ snapshot_get_time() }} as {{config.dbt_updated_at_column}},
-            snapshotted_data.{{config.dbt_valid_from_column}},
-            {{ snapshot_get_time() }} as {{config.dbt_valid_to_column}},
+            {{ snapshot_get_time() }} as dbt_updated_at,
+            snapshotted_data.dbt_valid_from,
+            {{ snapshot_get_time() }} as dbt_valid_to,
 
             {% if config.dbt_current_flag_column -%}
                 'N' as {{config.dbt_current_flag_column}},
             {%- endif %}
 
-            snapshotted_data.{{config.dbt_scd_id_column}}
+            snapshotted_data.dbt_scd_id
 
         from snapshotted_data
         left outer join snapshot_query as source_data on snapshotted_data.dbt_unique_key = source_data.{{ strategy.unique_key }}
@@ -172,10 +168,10 @@
             row_number() over (partition by null order by monotonically_increasing_id()) as {{config.surrogate_key}},
         {%- endif %}
         *,
-        {{ strategy.scd_id }} as {{config.dbt_scd_id_column}},
-        {{ strategy.updated_at }} as {{config.dbt_updated_at_column}},
-        {{ strategy.updated_at }} as {{config.dbt_valid_from_column}},
-        nullif({{ strategy.updated_at }}, {{ strategy.updated_at }}) as {{config.dbt_valid_to_column}}
+        {{ strategy.scd_id }} as dbt_scd_id,
+        {{ strategy.updated_at }} as dbt_updated_at,
+        {{ strategy.updated_at }} as dbt_valid_from,
+        nullif({{ strategy.updated_at }}, {{ strategy.updated_at }}) as dbt_valid_to
         {%- if config.dbt_current_flag_column -%},
         'Y' AS {{ config.dbt_current_flag_column }}
         {%- endif %}
@@ -191,11 +187,11 @@
 
     merge into {{ target }} as DBT_INTERNAL_DEST
     using {{ source }} as DBT_INTERNAL_SOURCE
-        on DBT_INTERNAL_SOURCE.{{config.dbt_scd_id_column}} = DBT_INTERNAL_DEST.{{config.dbt_scd_id_column}}
+        on DBT_INTERNAL_SOURCE.dbt_scd_id = DBT_INTERNAL_DEST.dbt_scd_id
 
         -- Databricks is likely to prune better on the dbt_unique_key or dbt_valid_from
         and DBT_INTERNAL_SOURCE.dbt_unique_key = DBT_INTERNAL_DEST.{{config.unique_key}}
-        and DBT_INTERNAL_SOURCE.{{config.dbt_valid_from_column}} = DBT_INTERNAL_DEST.{{config.dbt_valid_from_column}}
+        and DBT_INTERNAL_SOURCE.dbt_valid_from = DBT_INTERNAL_DEST.dbt_valid_from
 
         {% if config.surrogate_key -%}
         -- Databricks is also likely to prune well on a sequence-based surrogate key
@@ -203,10 +199,10 @@
         {%- endif %}
 
     when matched
-     and DBT_INTERNAL_DEST.{{config.dbt_valid_to_column}} is null
+     and DBT_INTERNAL_DEST.dbt_valid_to is null
      and DBT_INTERNAL_SOURCE.dbt_change_type in ('update', 'delete')
         then update
-        set {{config.dbt_valid_to_column}} = DBT_INTERNAL_SOURCE.{{config.dbt_valid_to_column}}
+        set dbt_valid_to = DBT_INTERNAL_SOURCE.dbt_valid_to
 
         {%- if config.dbt_current_flag_column -%}
            ,{{ config.dbt_current_flag_column }} = DBT_INTERNAL_SOURCE.{{config.dbt_current_flag_column}}
