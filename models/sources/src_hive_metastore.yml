@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: src_hive_metastore
+    database: hive_metastore
+    schema: default
+    tables:
+      - name: employee
+      - name: supplier
