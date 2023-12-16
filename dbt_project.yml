@@ -41,9 +41,6 @@ models:
   dbt_artifacts:
     +database: hive_metastore # optional, default is your target database
     +schema: dbt_artifacts # optional, default is your target schema
-    +enabled: false
-    sources:
-      +enabled: true
 
   dbt_databricks_snapshots:
     +persist_docs:
