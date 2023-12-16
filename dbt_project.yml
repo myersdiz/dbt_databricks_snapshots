@@ -24,6 +24,8 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "target"
   - "dbt_packages"
 
+on-run-end:
+  - "{{ dbt_artifacts.upload_results(results) }}"
 
 # Configuring models
 # Full documentation: https://docs.getdbt.com/docs/configuring-models
@@ -36,19 +38,28 @@ clean-targets:         # directories to be removed by `dbt clean`
 # using the `{{ config(...) }}` macro.
 
 models:
+  dbt_artifacts:
+    +database: hive_metastore # optional, default is your target database
+    +schema: dbt_artifacts # optional, default is your target schema
+    +enabled: false
+    sources:
+      +enabled: true
+
   dbt_databricks_snapshots:
     +persist_docs:
       relation: true
       columns: true
     marts:
       +materialized: incremental
+      sales:
+        +schema: sales
     sources:
     stage:
       +materialized: ephemeral
 
 snapshots:
   dbt_databricks_snapshots:
-    +target_schema: default
+    +target_schema: snapshots
     +strategy: check
     +check_cols: all
     +invalidate_hard_deletes: true
