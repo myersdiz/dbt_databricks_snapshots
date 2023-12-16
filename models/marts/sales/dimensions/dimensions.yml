@@ -1,0 +1,16 @@
+version: 2
+
+models:
+    - name: dim_employee
+      columns:
+          - name: employee_key
+            tests:
+                - unique
+                - not_null
+
+    - name: dim_supplier
+      columns:
+          - name: supplier_key
+            tests:
+                - unique
+                - not_null

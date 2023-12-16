@@ -40,6 +40,9 @@ models:
     +persist_docs:
       relation: true
       columns: true
+    marts:
+      +materialized: incremental
+    sources:
     stage:
       +materialized: ephemeral
 

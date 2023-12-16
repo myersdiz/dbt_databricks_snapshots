@@ -1,7 +1,7 @@
 version: 2
 
 sources:
-  - name: src_hive_metastore
+  - name: src_hive_metastore_default
     database: hive_metastore
     schema: default
     tables:
