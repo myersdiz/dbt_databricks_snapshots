@@ -1,1 +1,1 @@
-# dbt_databricks
+# dbt_databricks_snapshots
