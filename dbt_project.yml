@@ -39,7 +39,7 @@ on-run-end:
 
 models:
   dbt_artifacts:
-    +database: hive_metastore # optional, default is your target database
+    +database: sales_demo # optional, default is your target database
     +schema: dbt_artifacts # optional, default is your target schema
 
   dbt_databricks_snapshots:

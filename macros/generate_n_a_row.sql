@@ -16,14 +16,17 @@ select
     {% for col in model_cols %}
         {%- set col_name = col.column.lower() -%}
         {%- if col_name not in exclude_cols %}
-            {%- set default_value = "'N/A'" if col.data_type == 'string' else "0" if col.data_type == 'int' else "0" if col.data_type == 'bigint' else "NULL" %}
+            {%- set default_value = "'N/A'" if col.data_type == 'string'
+                               else "0::int" if col.data_type == 'int'
+                               else "0::bigint" if col.data_type == 'bigint'
+                               else "NULL" %}
             {%- set new_value = key_value_dict[col_name.lower()] if col_name.lower() in key_value_dict else default_value -%}
     {{ new_value }} as {{ col_name }},
         {% endif -%}
     {% endfor %}
-    to_timestamp_ntz('2000-01-01 00:00:00.000') as dbt_updated_at,
-    to_timestamp_ntz('2000-01-01 00:00:00.000') as dbt_valid_from,
-    to_timestamp_ntz('9999-12-31 23:59:59.999') as dbt_valid_to,
+    current_timestamp() as dbt_updated_at,
+    current_timestamp() as dbt_valid_from,
+    '9999-12-31 23:59:59.999'::timestamp as dbt_valid_to,
     'Y' as dbt_current_flag
   {%- endif -%}
 
