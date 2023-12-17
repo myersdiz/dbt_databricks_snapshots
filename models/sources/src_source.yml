@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: src_source
+    database: sales_demo
+    schema: source
+    tables:
+      - name: src_employee
+      - name: src_supplier
