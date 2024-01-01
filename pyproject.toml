@@ -1,0 +1,3 @@
+[tool.sqlfmt]
+line_length = 100
+exclude = ["target/**/*", "dbt_packages/**/*"]
